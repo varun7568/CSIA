@@ -3,6 +3,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class OrderManager {
     private ArrayList<Order> orders;
@@ -15,6 +16,11 @@ public class OrderManager {
         orders.add(order);
     }
 
+    public ArrayList<Order> getOrders(){
+        return orders;
+    }
+
+
     public void statusSort(String status){
         for(Order order: orders){
             if(order.getStatus().equalsIgnoreCase(status)){
@@ -22,6 +28,8 @@ public class OrderManager {
             }
         }
     }
+
+
 
     public void createOrder(Scanner scanner, Recipes recipes, CustomerManager customerManager) {
         System.out.println("Enter customer's name");

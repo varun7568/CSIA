@@ -10,9 +10,13 @@ public class HomeScreen extends JFrame implements ActionListener {
     private JButton buttonCustomer;
     private JButton buttonAnalytics;
     private JButton buttonRecipes;
+    private Stock stock;
+    private OrderManager om;
     //private JLabel logoLabel;  For the logo
 
     public HomeScreen() {
+        this.stock = new Stock();
+        this.om = new OrderManager();
         setTitle("Menu Screen");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -68,20 +72,20 @@ public class HomeScreen extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Stock Management")) {
             System.out.println("Opening Stock");
-            StockScreen stockScreen = new StockScreen();
+            StockScreen stockScreen = new StockScreen(stock);
         } else if (e.getActionCommand().equals("Manage Orders")) {
             System.out.println("Opening Orders");
-            OrderScreen orderScreen = new OrderScreen();
+            OrderScreen orderScreen = new OrderScreen(new OrderManager());
+            orderScreen.setVisible(true);
         } else if (e.getActionCommand().equals("Customer Analytics")) {
-            System.out.println("Opening Analytics (Reports)");
-            // ReportsScreen reportsScreen = new ReportsScreen();
+            System.out.println("Opening Analytics");
+            ReportsScreen reportsScreen = new ReportsScreen(om);
         } else if (e.getActionCommand().equals("Customer Overview")) {
             System.out.println("Opening Customer");
             CustomerScreen customerScreen = new CustomerScreen();
         } else if (e.getActionCommand().equals("Recipes")) {
             System.out.println("Opening Recipes Screen");
             RecipeScreen recipeScreen = new RecipeScreen();
-
         }
     }
 
@@ -100,18 +104,22 @@ public class HomeScreen extends JFrame implements ActionListener {
             homeButton.setBackground(Color.GRAY);
         });
         stockButton.addActionListener(e -> {
-            StockScreen stockScreen = new StockScreen();
+            StockScreen stockScreen = new StockScreen(stock);
             stockButton.setBackground(Color.GRAY);
         } );
         orderButton.addActionListener(e -> {
-            OrderScreen orderScreen = new OrderScreen();
+            OrderScreen orderScreen = new OrderScreen(new OrderManager());
             orderButton.setBackground(Color.GRAY);
         } );
         customerButton.addActionListener(e -> {
             CustomerScreen customerScreen = new CustomerScreen();
             customerButton.setBackground(Color.GRAY);
         } );
-        //reportsButton.addActionListener(e -> new ReportsScreen());
+        reportsButton.addActionListener(e -> {
+            ReportsScreen reportsScreen = new ReportsScreen(om);
+            reportsButton.setBackground(Color.GRAY);
+        });
+
         recipesButton.addActionListener(e -> {
             RecipeScreen recipeScreen = new RecipeScreen();
             recipesButton.setBackground(Color.GRAY);

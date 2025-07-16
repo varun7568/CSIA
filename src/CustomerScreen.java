@@ -97,6 +97,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
             CustomerInfo customerInfoDialog = new CustomerInfo(customerManager);
             customerInfoDialog.setVisible(true);
             loadCustomersIntoTable();
+            toggleExistingCustomersView(false);
 
         } else if (e.getActionCommand().equals("Existing Customers")) {
             System.out.println("Displaying existing customers");

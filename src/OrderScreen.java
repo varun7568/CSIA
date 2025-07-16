@@ -7,9 +7,19 @@ public class OrderScreen extends JFrame implements ActionListener{
     private JLabel labelOutput;
     private JButton viewOrders;
     private JButton addOrders;
+    private OrderManager orderManager;
+    private Recipes recipes;
+    private CustomerManager customerManager;
+    private JTextField textName;
+    private JTextField textNum;
+    private JTextField textOrder;
+    private JButton createButton;
 
-    public OrderScreen(){
-        setTitle("Order Screen");
+    public OrderScreen(OrderManager orderManager){
+        this.orderManager = new OrderManager();
+        this.customerManager = new CustomerManager();
+        this.recipes = new Recipes();
+        orderManager.loadOrders(customerManager, recipes);setTitle("Order Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH); // quit the app when we close the window
         setSize(600, 400);
@@ -36,11 +46,30 @@ public class OrderScreen extends JFrame implements ActionListener{
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("View Orders")) {
             openOrders();
-        } if(e.getActionCommand().equals("New Order")){
-            //addOrder()
+        } if(e.getActionCommand().equals("New Orders")){
+            viewOrders.setVisible(false);
+            addOrders.setVisible(false);
+            addOrder();
             System.out.println("Opening New Orders");
-        } else {
+        } if(e.getSource() == createButton) {
+            String name = textName.getText().trim();
+            String phoneNum = textNum.getText().trim();
+            String address = textOrder.getText().trim();
 
+            if (name.isEmpty() || phoneNum.isEmpty() || address.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "All fields are required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Customer newCustomer = new Customer(name, phoneNum, address);
+            customerManager.addCustomer(newCustomer);
+
+            JOptionPane.showMessageDialog(this, "Customer '" + name + "' added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            textName.setText("");
+            textNum.setText("");
+            textOrder.setText("");
+            this.dispose();
         }
     }
 
@@ -77,6 +106,42 @@ public class OrderScreen extends JFrame implements ActionListener{
 
         add(tabbedPane, BorderLayout.CENTER);
         setVisible(true);
+    }
+
+    public void addOrder(){
+        CustomerManager cm = new CustomerManager();
+
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        setSize(400, 350);
+        setLayout(null);
+        setLocationRelativeTo(null);
+
+        JLabel nameLabel = new JLabel("Customer Name:");
+        nameLabel.setBounds(50, 50, 150, 25);
+        add(nameLabel);
+        textName = new JTextField();
+        textName.setBounds(50, 80, 250, 30);
+        add(textName);
+
+        JLabel numLabel = new JLabel("Phone Number:");
+        numLabel.setBounds(50, 120, 150, 25);
+        add(numLabel);
+        textNum = new JTextField();
+        textNum.setBounds(50, 150, 250, 30);
+        add(textNum);
+
+        JLabel orderLabel = new JLabel("Order:");
+        orderLabel.setBounds(50, 190, 150, 25);
+        add(orderLabel);
+        textOrder = new JTextField();
+        textOrder.setBounds(50, 220, 250, 30);
+        add(textOrder);
+
+        createButton = new JButton("Add Customer");
+        createButton.setBounds(120, 270, 150, 30);
+        createButton.addActionListener(this);
+        add(createButton);
+
     }
 
 }

@@ -3,7 +3,7 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 
 public class Order {
-    private static int idCounter = 1;
+    static int idCounter = 1;
     private int orderID;
     private Customer customer;
     private ArrayList<Dish> dishes;

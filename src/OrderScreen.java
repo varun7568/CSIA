@@ -7,8 +7,15 @@ public class OrderScreen extends JFrame implements ActionListener{
     private JLabel labelOutput;
     private JButton viewOrders;
     private JButton addOrders;
+    private OrderManager orderManager;
+    private Recipes recipes;
+    private CustomerManager customerManager;
 
     public OrderScreen(){
+        this.orderManager = new OrderManager();
+        this.customerManager = new CustomerManager();
+        this.recipes = new Recipes();
+        orderManager.loadOrders(customerManager, recipes);
         setTitle("Order Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH); // quit the app when we close the window

@@ -1,0 +1,9 @@
+1;Alice;15/06/2025;Completed;Pizza|Burger
+2;Bob;20/06/2025;Completed;Pizza|Sushi
+3;Alice;01/07/2025;Completed;Sushi|Burger
+4;Charlie;05/07/2025;Completed;Pizza
+5;Diana;12/07/2025;Completed;Salad
+6;Bob;01/08/2025;Completed;Pizza|Salad
+7;Eve;25/08/2025;Completed;Burger
+8;Alice;30/08/2025;Completed;Pizza
+9;Charlie;05/09/2025;Completed;Salad|Burger

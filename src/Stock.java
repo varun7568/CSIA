@@ -4,6 +4,14 @@ public class Stock {
     private HashMap<String, Ingredient> stock;
     private final int minStock = 5;
 
+    public HashMap<String, Ingredient> getStockMap() {
+        return stock;
+    }
+
+    public int getMinStock() {
+        return minStock;
+    }
+
     public Stock(){
         stock = new HashMap<>();
     }
@@ -40,5 +48,6 @@ public class Stock {
             System.out.println(name + "is not found in stock");
         }
     }
+
 
 }

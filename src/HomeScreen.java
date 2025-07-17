@@ -10,6 +10,8 @@ public class HomeScreen extends JFrame implements ActionListener {
     private JButton buttonCustomer;
     private JButton buttonAnalytics;
     private JButton buttonRecipes;
+    private Stock stock = new Stock();
+    private OrderManager om = new OrderManager();
     //private JLabel logoLabel;  For the logo
 
     public HomeScreen() {
@@ -68,13 +70,13 @@ public class HomeScreen extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Stock Management")) {
             System.out.println("Opening Stock");
-            StockScreen stockScreen = new StockScreen();
+            StockScreen stockScreen = new StockScreen(stock); // pass the real stock
         } else if (e.getActionCommand().equals("Manage Orders")) {
             System.out.println("Opening Orders");
             OrderScreen orderScreen = new OrderScreen();
         } else if (e.getActionCommand().equals("Customer Analytics")) {
             System.out.println("Opening Analytics (Reports)");
-            // ReportsScreen reportsScreen = new ReportsScreen();
+            ReportsScreen reportsScreen = new ReportsScreen(om);
         } else if (e.getActionCommand().equals("Customer Overview")) {
             System.out.println("Opening Customer");
             CustomerScreen customerScreen = new CustomerScreen();
@@ -100,7 +102,7 @@ public class HomeScreen extends JFrame implements ActionListener {
             homeButton.setBackground(Color.GRAY);
         });
         stockButton.addActionListener(e -> {
-            StockScreen stockScreen = new StockScreen();
+            StockScreen stockScreen = new StockScreen(stock);
             stockButton.setBackground(Color.GRAY);
         } );
         orderButton.addActionListener(e -> {

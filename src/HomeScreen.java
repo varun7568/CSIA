@@ -76,7 +76,7 @@ public class HomeScreen extends JFrame implements ActionListener {
             OrderScreen orderScreen = new OrderScreen();
         } else if (e.getActionCommand().equals("Customer Analytics")) {
             System.out.println("Opening Analytics (Reports)");
-            ReportsScreen reportsScreen = new ReportsScreen(om);
+            ReportsScreen reportsScreen = new ReportsScreen();
         } else if (e.getActionCommand().equals("Customer Overview")) {
             System.out.println("Opening Customer");
             CustomerScreen customerScreen = new CustomerScreen();

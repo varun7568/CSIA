@@ -24,14 +24,6 @@ public class Stock {
         }
     }
 
-    public HashMap<String, Ingredient> getStockMap() {
-        return stock;
-    }
-
-    public int getMinStock() {
-        return minStock;
-    }
-
     public void checkStockWarning(){
         for (Ingredient ingredient: stock.values()){
             if (ingredient.getQuantity() < minStock){

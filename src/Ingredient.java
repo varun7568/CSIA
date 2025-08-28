@@ -20,6 +20,10 @@ public class Ingredient {
         return quantity;
     }
 
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public void updateQuantity(int amount){
         this.quantity += amount;
         System.out.println(name + "quantity updated by " + quantity);

@@ -2,88 +2,116 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
-public class OrderScreen extends JFrame implements ActionListener{
-    private JLabel labelOutput;
+public class OrderScreen extends JFrame implements ActionListener {
     private JButton viewOrders;
     private JButton addOrders;
     private OrderManager orderManager;
     private Recipes recipes;
     private CustomerManager customerManager;
 
-    public OrderScreen(){
+    public OrderScreen() {
         this.orderManager = new OrderManager();
         this.customerManager = new CustomerManager();
         this.recipes = new Recipes();
         orderManager.loadOrders(customerManager, recipes);
+
         setTitle("Order Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH); // quit the app when we close the window
-        setSize(600, 400);
-        setLayout(null);
-        labelOutput = new JLabel("Order Screen");
-        labelOutput.setBounds(150, 50, 150, 30);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setSize(800, 600);
+        setLayout(new FlowLayout());
 
-        viewOrders = new JButton("View Orders");
-        viewOrders.setBounds(80, 80, 180, 100);
-        viewOrders.addActionListener(this);
-
-        addOrders = new JButton("New Orders");
-        addOrders.setBounds(80, 200, 180, 100);
+        addOrders = new JButton("New Order");
+        addOrders.setPreferredSize(new Dimension(200, 100));
         addOrders.addActionListener(this);
 
-        add(labelOutput);
-        add(viewOrders);
+        viewOrders = new JButton("View Orders");
+        viewOrders.setPreferredSize(new Dimension(200, 100));
+        viewOrders.addActionListener(this);
+
         add(addOrders);
+        add(viewOrders);
 
         setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("View Orders")) {
-            openOrders();
-        } if(e.getActionCommand().equals("New Order")){
-            //addOrder()
-            System.out.println("Opening New Orders");
-        } else {
-
+        if (e.getSource() == addOrders) {
+            new OrderDialog(this, orderManager, customerManager, recipes);
+        } else if (e.getSource() == viewOrders) {
+            openOrdersView();
         }
     }
 
-    public void openOrders(){
-        viewOrders.setVisible(false);
+    public void openOrdersView() {
+        // Hide the initial buttons
         addOrders.setVisible(false);
-        labelOutput.setVisible(false);
-        setTitle("Order Screen");
-        setSize(600, 400);
-        setLayout(new BorderLayout());
+        viewOrders.setVisible(false);
+
+        // Add a title
+        JLabel titleLabel = new JLabel("Order Management");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        add(titleLabel, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        //sort orders by completion date
+        String[] columns = {"Order ID", "Customer Name", "Completion Date", "Status"};
 
-        String[] columns = {"Order ID", "Customer", "Date", "Status"};
-        Object[][] ongoingOrders = {
-                {"001", "", "", "Ongoing"},
-                {"002", "", "", "Ongoing"}
-                ///need to write from orders textfile
-        };
-        Object[][] previousOrders = {
-                {"003", "", "", "Completed"},
-                {"004", "", "", "Completed"}
-        };
-        Object[][] upcomingOrders = {
-                {"005", "", "", "Upcoming"},
-                {"006", "", "", "Upcoming"}
-        };
+        // Create lists of orders filtered by status
+        ArrayList<Order> allOrders = orderManager.getOrders();
+        ArrayList<Order> ongoingOrders = new ArrayList<>();
+        ArrayList<Order> upcomingOrders = new ArrayList<>();
+        ArrayList<Order> completedOrders = new ArrayList<>();
 
-        tabbedPane.add("Ongoing", new Table(columns, ongoingOrders, false));
-        tabbedPane.add("Previous", new Table(columns, previousOrders, false));
-        tabbedPane.add("Upcoming", new Table(columns, upcomingOrders, false));
+        for (Order order : allOrders) {
+            if ("Ongoing".equalsIgnoreCase(order.getStatus())) {
+                ongoingOrders.add(order);
+            } else if ("Upcoming".equalsIgnoreCase(order.getStatus())) {
+                upcomingOrders.add(order);
+            } else if ("Completed".equalsIgnoreCase(order.getStatus())) {
+                completedOrders.add(order);
+            }
+        }
+
+        // Convert the order lists to Object arrays for the Table class
+        ArrayList<Object[]> ongoingData = convertOrdersToRows(ongoingOrders);
+        ArrayList<Object[]> upcomingData = convertOrdersToRows(upcomingOrders);
+        ArrayList<Object[]> completedData = convertOrdersToRows(completedOrders);
+
+        // Create the tables for each status
+        tabbedPane.add("Ongoing", new Table(columns, ongoingData, true, e -> {
+            // Implement delete logic here if needed
+            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
+        }));
+        tabbedPane.add("Upcoming", new Table(columns, upcomingData, true, e -> {
+            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
+        }));
+        tabbedPane.add("Completed", new Table(columns, completedData, true, e -> {
+            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
+        }));
 
         add(tabbedPane, BorderLayout.CENTER);
-        setVisible(true);
+        revalidate();
+        repaint();
     }
 
+    private ArrayList<Object[]> convertOrdersToRows(ArrayList<Order> orders) {
+        ArrayList<Object[]> rows = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        for (Order order : orders) {
+            rows.add(new Object[]{
+                    order.getOrderID(),
+                    order.getCustomer().getName(),
+                    sdf.format(order.getCompletionDate()),
+                    order.getStatus()
+            });
+        }
+        return rows;
+    }
 }

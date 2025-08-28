@@ -12,12 +12,12 @@ public class Order {
 
 
     /// intake orders,implement fooddishes
-    public Order(Customer customer, ArrayList<Dish> dishes, Date completionDate){
-        this.orderID = idCounter++;
+    public Order(int orderID, Customer customer, ArrayList<Dish> dishes, Date completionDate, String status) {
+        this.orderID = orderID;
         this.customer = customer;
         this.dishes = dishes;
-        this.status = "Upcoming";
         this.completionDate = completionDate;
+        this.status = status;
     }
 
     public int getOrderID() {

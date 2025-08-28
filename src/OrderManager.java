@@ -52,40 +52,44 @@ public class OrderManager {
         FileHandler.saveToFile(FILE_NAME, lines, s -> s);
     }
 
-    public void loadOrders(CustomerManager cm, Recipes recipes) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        ArrayList<String> lines = FileHandler.loadFromFile(FILE_NAME, s -> s);
-
+    public void loadOrders(CustomerManager customerManager, Recipes recipes) {
+        ArrayList<String> lines = FileHandler.loadFromFile("orders.txt", s -> s);
         for (String line : lines) {
             String[] parts = line.split(";");
-            if (parts.length >= 5) {
+            if (parts.length >= 6) {
                 try {
-                    int id = Integer.parseInt(parts[0]);
-                    String customerName = parts[1];
-                    Date date = sdf.parse(parts[2]);
-                    String status = parts[3];
-                    String[] dishNames = parts[4].split("\\|");
+                    int orderID = Integer.parseInt(parts[0].trim());
+                    String customerName = parts[1].trim();
+                    String dishesString = parts[2].trim();
+                    String completionDateStr = parts[3].trim();
+                    String status = parts[4].trim();
 
-                    Customer customer = cm.getCustomerByName(customerName);
-                    if (customer == null) continue;
+                    // Get the customer
+                    Customer customer = customerManager.getCustomerByName(customerName);
+                    if (customer == null) {
+                        System.err.println("Customer not found for order: " + customerName);
+                        continue;
+                    }
 
+                    // Create a list of dishes from the string
                     ArrayList<Dish> dishes = new ArrayList<>();
+                    String[] dishNames = dishesString.split(",");
                     for (String dishName : dishNames) {
-                        ArrayList<Ingredient> ingList = recipes.getRecipe(dishName);
-                        dishes.add(new Dish(dishName, 0)); // use dummy price
+                        // We need to get the Dish object from the Recipe
+                        Recipe recipe = recipes.getRecipe(dishName.trim());
+                        if (recipe != null) {
+                            dishes.add(recipe.getDish()); // Add the Dish object to the list
+                        }
                     }
 
-                    Order order = new Order(customer, dishes, date);
-                    order.setStatus(status);
-                    orders.add(order);
+                    Date completionDate = new SimpleDateFormat("dd/MM/yyyy").parse(completionDateStr);
 
-                    // Ensure the order ID counter keeps increasing
-                    if (id >= Order.idCounter) {
-                        Order.idCounter = id + 1;
-                    }
+                    Order newOrder = new Order(orderID, customer, dishes, completionDate, status);
+                    orders.add(newOrder);
 
                 } catch (Exception e) {
-                    System.out.println("Error loading order: " + e.getMessage());
+                    System.err.println("Error loading order from line: " + line);
+                    e.printStackTrace();
                 }
             }
         }

@@ -75,13 +75,31 @@ public class CustomerScreen extends JFrame implements ActionListener {
     }
 
     private void loadCustomersIntoTable() {
-        // Remove old table panel if it exists
-        if (customerTablePanel != null) {
+        if (scrollPane != null) {
             remove(scrollPane);
         }
 
         String[] columnNames = {"Name", "Phone Number", "Address", "Orders"};
-        customerTablePanel = new Table(columnNames, customerManager.getAllCustomers(), true, customerManager);
+
+        ArrayList<Object[]> rowData = new ArrayList<>();
+        for (Customer c : customerManager.getAllCustomers()) {
+            rowData.add(new Object[]{
+                    c.getName(),
+                    c.getPhoneNum(),
+                    c.getAddress(),
+                    String.join(", ", c.getOrders())
+            });
+        }
+
+        customerTablePanel = new Table(columnNames, rowData, true, e -> {
+            String nameToDelete = e.getActionCommand();
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Delete customer '" + nameToDelete + "'?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                customerManager.deleteCustomer(nameToDelete);
+                loadCustomersIntoTable();
+            }
+        });
 
         scrollPane = new JScrollPane(customerTablePanel);
         scrollPane.setBounds(50, 180, 700, 350);

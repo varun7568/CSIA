@@ -11,6 +11,7 @@ public class HomeScreen extends JFrame implements ActionListener {
     private JButton buttonAnalytics;
     private JButton buttonRecipes;
     private Stock stock = new Stock();
+    private Recipes recipes;
     private OrderManager om = new OrderManager();
     //private JLabel logoLabel;  For the logo
 
@@ -20,6 +21,7 @@ public class HomeScreen extends JFrame implements ActionListener {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(new BorderLayout());
         add(createPanel(), BorderLayout.NORTH);
+        this.recipes = new Recipes();
 
         buttonOrders = new JButton("Manage Orders");
         buttonOrders.setBounds(80, 80, 180, 100);
@@ -82,7 +84,7 @@ public class HomeScreen extends JFrame implements ActionListener {
             CustomerScreen customerScreen = new CustomerScreen();
         } else if (e.getActionCommand().equals("Recipes")) {
             System.out.println("Opening Recipes Screen");
-            RecipeScreen recipeScreen = new RecipeScreen();
+            RecipeScreen recipeScreen = new RecipeScreen(recipes, stock);;
 
         }
     }
@@ -115,7 +117,7 @@ public class HomeScreen extends JFrame implements ActionListener {
         } );
         //reportsButton.addActionListener(e -> new ReportsScreen());
         recipesButton.addActionListener(e -> {
-            RecipeScreen recipeScreen = new RecipeScreen();
+            RecipeScreen recipeScreen = new RecipeScreen(recipes, stock);
             recipesButton.setBackground(Color.GRAY);
         } );
 

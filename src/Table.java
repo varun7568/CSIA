@@ -3,38 +3,37 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class Table extends JPanel {
     private JTable table;
     private DefaultTableModel model;
-    private CustomerManager customerManager; // needed to trigger delete
 
-    public Table(String[] columnNames, ArrayList<Customer> allCustomers, boolean includeDeleteColumn, CustomerManager customerManager) {
-        this.customerManager = customerManager;
+    public Table(String[] columnNames, ArrayList<Object[]> rowData, boolean includeDeleteColumn, ActionListener deleteListener) {
         setLayout(new BorderLayout());
 
-        // Add Delete column if needed
-        if (includeDeleteColumn) {
-            String[] extendedColumns = new String[columnNames.length + 1];
-            System.arraycopy(columnNames, 0, extendedColumns, 0, columnNames.length);
-            extendedColumns[columnNames.length] = "Delete";
-            columnNames = extendedColumns;
+        Vector<String> columnVector = new Vector<>();
+        for (String name : columnNames) {
+            columnVector.add(name);
         }
 
-        // Convert data
-        Object[][] rowData = new Object[allCustomers.size()][columnNames.length];
-        for (int i = 0; i < allCustomers.size(); i++) {
-            Customer c = allCustomers.get(i);
-            rowData[i][0] = c.getName();
-            rowData[i][1] = c.getPhoneNum();
-            rowData[i][2] = c.getAddress();
-            rowData[i][3] = String.join(", ", c.getOrders());
-            if (includeDeleteColumn) {
-                rowData[i][4] = "Delete";
+        Vector<Vector<Object>> dataVector = new Vector<>();
+        for (Object[] row : rowData) {
+            Vector<Object> rowVector = new Vector<>();
+            for (Object item : row) {
+                rowVector.add(item);
+            }
+            dataVector.add(rowVector);
+        }
+
+        if (includeDeleteColumn) {
+            columnVector.add("Delete");
+            for (Vector<Object> row : dataVector) {
+                row.add("Delete"); // Placeholder value for the button
             }
         }
 
-        model = new DefaultTableModel(rowData, columnNames) {
+        model = new DefaultTableModel(dataVector, columnVector) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return includeDeleteColumn && column == getColumnCount() - 1;
@@ -42,32 +41,37 @@ public class Table extends JPanel {
         };
 
         table = new JTable(model);
+        table.setFillsViewportHeight(true);
+        table.getTableHeader().setReorderingAllowed(false);
         JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane, BorderLayout.CENTER);
 
         if (includeDeleteColumn) {
-            setupDeleteButton(); // Activate delete logic
+            setupDeleteButton(deleteListener);
         }
     }
 
-    private void setupDeleteButton() {
+    public JTable getTable() {
+        return table;
+    }
+
+    private void setupDeleteButton(ActionListener deleteListener) {
         table.getColumn("Delete").setCellRenderer((table, value, isSelected, hasFocus, row, column) -> new JButton("Delete"));
 
         table.getColumn("Delete").setCellEditor(new DefaultCellEditor(new JCheckBox()) {
             private final JButton deleteButton = new JButton("Delete");
+            private String nameToDelete;
+            private int rowToDelete;
 
             {
                 deleteButton.addActionListener(e -> {
-                    int selectedRow = table.getSelectedRow();
-                    if (selectedRow != -1) {
-                        String name = (String) model.getValueAt(selectedRow, 0); // Column 0 = Name
-                        int confirm = JOptionPane.showConfirmDialog(table,
-                                "Delete customer '" + name + "'?", "Confirm", JOptionPane.YES_NO_OPTION);
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            customerManager.deleteCustomer(name);
-                            model.removeRow(selectedRow);
-                        }
-                    }
+                    fireEditingStopped(); // Stop editing the cell
+
+                    rowToDelete = table.convertRowIndexToModel(table.getEditingRow());
+                    nameToDelete = (String) model.getValueAt(rowToDelete, 0);
+
+                    ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, nameToDelete);
+                    deleteListener.actionPerformed(event);
                 });
             }
 
@@ -78,61 +82,11 @@ public class Table extends JPanel {
         });
     }
 
-    public Table(String[] columnNames, Object[][] rowData, boolean includeDeleteColumn) {
-        setLayout(new BorderLayout());
+    public void refreshData(ArrayList<Object[]> rowData) {
+        model.setRowCount(0);
 
-        // If Delete column is required, add it
-        if (includeDeleteColumn) {
-            String[] extendedColumns = new String[columnNames.length + 1];
-            System.arraycopy(columnNames, 0, extendedColumns, 0, columnNames.length);
-            extendedColumns[columnNames.length] = "Delete";
-            columnNames = extendedColumns;
-
-            Object[][] newRowData = new Object[rowData.length][columnNames.length];
-            for (int i = 0; i < rowData.length; i++) {
-                System.arraycopy(rowData[i], 0, newRowData[i], 0, rowData[i].length);
-                newRowData[i][columnNames.length - 1] = "Delete";
-            }
-            rowData = newRowData;
+        for (Object[] row : rowData) {
+            model.addRow(row);
         }
-
-        model = new DefaultTableModel(rowData, columnNames) {
-            public boolean isCellEditable(int row, int column) {
-                if (includeDeleteColumn && column == getColumnCount() - 1) return true;
-                return false;
-            }
-        };
-
-        table = new JTable(model);
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
-
-        if (includeDeleteColumn) {
-            setupDeleteButton2();
-        }
-    }
-
-    private void setupDeleteButton2() {
-        table.getColumn("Delete").setCellRenderer((table, value, isSelected, hasFocus, row, column) -> {
-            return new JButton("Delete");
-        });
-
-        table.getColumn("Delete").setCellEditor(new DefaultCellEditor(new JCheckBox()) {
-            private final JButton deleteButton = new JButton("Delete");
-
-            {
-                deleteButton.addActionListener(e -> {
-                    int row = table.getSelectedRow();
-                    if (row != -1) {
-                        model.removeRow(row);
-                    }
-                });
-            }
-
-            @Override
-            public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-                return deleteButton;
-            }
-        });
     }
 }

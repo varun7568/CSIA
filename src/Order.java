@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Date;
-import java.text.SimpleDateFormat;
 
 public class Order {
     static int idCounter = 1;
@@ -8,18 +7,33 @@ public class Order {
     private Customer customer;
     private ArrayList<Dish> dishes;
     private Date completionDate;
-    private String status; //Upcoming,Ongoing,Completed
+    private String status;
 
-
-    /// intake orders,implement fooddishes
-    public Order(int orderID, Customer customer, ArrayList<Dish> dishes, Date completionDate, String status) {
-        this.orderID = orderID;
+    public Order(Customer customer, ArrayList<Dish> dishes, Date completionDate) {
+        this.orderID = idCounter++;
         this.customer = customer;
         this.dishes = dishes;
+        this.status = "Upcoming";
         this.completionDate = completionDate;
-        this.status = status;
     }
 
+    public void markCompleted(Stock stock, Recipes recipes) {
+        for (Dish dish : dishes) {
+            ArrayList<Ingredient> ingredients = recipes.getRecipe(dish.getName());
+            if (ingredients != null) {
+                for (Ingredient ingredient : ingredients) {
+                    // Cast double to int if needed, or keep as double
+                    stock.deductIngredient(ingredient.getName(), (int) ingredient.getQuantity());
+                }
+            }
+        }
+        this.status = "Completed";
+        System.out.println("Order " + orderID + " is complete");
+    }
+
+    public void setCompletionDate(Date completionDate) {
+        this.completionDate = completionDate;
+    }
     public int getOrderID() {
         return orderID;
     }
@@ -43,24 +57,6 @@ public class Order {
     public Date getCompletionDate(){
         return completionDate;
     }
-
-    public void setCompletionDate(Date completionDate) {
-        this.completionDate = completionDate;
-    }
-
-    public void markCompleted (Stock stock, Recipes recipes){
-        for(Dish dish: dishes){
-            ArrayList<Ingredient> ingredients = recipes.getRecipe(dish.getName());
-            if(ingredients != null){
-                for(Ingredient ingredient: ingredients){
-                    stock.deductIngredient(ingredient.getName(), ingredient.getQuantity());
-                }
-            }
-        }
-        this.status = "Completed";
-        System.out.println("Order" + orderID + "is complete");
-    }
-
     //link orderID to customer
     //track timestamps for reports
 }

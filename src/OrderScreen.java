@@ -1,117 +1,109 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
+import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class OrderScreen extends JFrame implements ActionListener {
-    private JButton viewOrders;
-    private JButton addOrders;
+    private JLabel labelOrders;
+    private JButton newOrderButton;
+    private JButton existingOrdersButton;
+    private JScrollPane scrollPane;
     private OrderManager orderManager;
-    private Recipes recipes;
-    private CustomerManager customerManager;
+    private Table orderTablePanel;
 
-    public OrderScreen() {
-        this.orderManager = new OrderManager();
-        this.customerManager = new CustomerManager();
-        this.recipes = new Recipes();
-        orderManager.loadOrders(customerManager, recipes);
+    public OrderScreen(OrderManager orderManager) {
+        this.orderManager = orderManager;
 
         setTitle("Order Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setSize(800, 600);
-        setLayout(new FlowLayout());
+        setLayout(null);
 
-        addOrders = new JButton("New Order");
-        addOrders.setPreferredSize(new Dimension(200, 100));
-        addOrders.addActionListener(this);
-
-        viewOrders = new JButton("View Orders");
-        viewOrders.setPreferredSize(new Dimension(200, 100));
-        viewOrders.addActionListener(this);
-
-        add(addOrders);
-        add(viewOrders);
-
+        setupUI();
         setVisible(true);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == addOrders) {
-            new OrderDialog(this, orderManager, customerManager, recipes);
-        } else if (e.getSource() == viewOrders) {
-            openOrdersView();
-        }
+    private void setupUI() {
+        labelOrders = new JLabel("Order Screen");
+        labelOrders.setBounds(300, 20, 200, 30);
+        labelOrders.setHorizontalAlignment(SwingConstants.CENTER);
+        labelOrders.setFont(new Font("Arial", Font.BOLD, 20));
+
+        newOrderButton = new JButton("New Order");
+        newOrderButton.setBounds(50, 80, 150, 30);
+        newOrderButton.addActionListener(this);
+
+        existingOrdersButton = new JButton("Existing Orders");
+        existingOrdersButton.setBounds(210, 80, 180, 30);
+        existingOrdersButton.addActionListener(this);
+
+        add(labelOrders);
+        add(newOrderButton);
+        add(existingOrdersButton);
+
+        toggleExistingOrdersView(false);
     }
 
-    public void openOrdersView() {
-        // Hide the initial buttons
-        addOrders.setVisible(false);
-        viewOrders.setVisible(false);
+    private void toggleExistingOrdersView(boolean visible) {
+        if (scrollPane != null) scrollPane.setVisible(visible);
+        newOrderButton.setVisible(!visible);
+        existingOrdersButton.setVisible(!visible);
+        labelOrders.setText(visible ? "Order Overview" : "Order Screen");
+    }
 
-        // Add a title
-        JLabel titleLabel = new JLabel("Order Management");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        add(titleLabel, BorderLayout.NORTH);
-
-        JTabbedPane tabbedPane = new JTabbedPane();
-
-        String[] columns = {"Order ID", "Customer Name", "Completion Date", "Status"};
-
-        // Create lists of orders filtered by status
-        ArrayList<Order> allOrders = orderManager.getOrders();
-        ArrayList<Order> ongoingOrders = new ArrayList<>();
-        ArrayList<Order> upcomingOrders = new ArrayList<>();
-        ArrayList<Order> completedOrders = new ArrayList<>();
-
-        for (Order order : allOrders) {
-            if ("Ongoing".equalsIgnoreCase(order.getStatus())) {
-                ongoingOrders.add(order);
-            } else if ("Upcoming".equalsIgnoreCase(order.getStatus())) {
-                upcomingOrders.add(order);
-            } else if ("Completed".equalsIgnoreCase(order.getStatus())) {
-                completedOrders.add(order);
-            }
+    private void loadOrdersIntoTable() {
+        if (scrollPane != null) {
+            remove(scrollPane);
         }
 
-        // Convert the order lists to Object arrays for the Table class
-        ArrayList<Object[]> ongoingData = convertOrdersToRows(ongoingOrders);
-        ArrayList<Object[]> upcomingData = convertOrdersToRows(upcomingOrders);
-        ArrayList<Object[]> completedData = convertOrdersToRows(completedOrders);
+        String[] columnNames = {"Order ID", "Customer", "Date", "Status", "Dishes"};
+        ArrayList<Order> orders = orderManager.getOrdersByStatus("Upcoming"); // example
 
-        // Create the tables for each status
-        tabbedPane.add("Ongoing", new Table(columns, ongoingData, true, e -> {
-            // Implement delete logic here if needed
-            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
-        }));
-        tabbedPane.add("Upcoming", new Table(columns, upcomingData, true, e -> {
-            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
-        }));
-        tabbedPane.add("Completed", new Table(columns, completedData, true, e -> {
-            JOptionPane.showMessageDialog(this, "Delete functionality to be implemented.");
-        }));
+        Object[][] data = new Object[orders.size()][5];
+        for (int i = 0; i < orders.size(); i++) {
+            Order o = orders.get(i);
+            data[i][0] = o.getOrderID();
+            data[i][1] = o.getCustomer().getName();
+            data[i][2] = o.getCompletionDate() != null ? o.getCompletionDate().toString() : "N/A";
+            data[i][3] = o.getStatus();
+            data[i][4] = o.getDishes().toString();
+        }
 
-        add(tabbedPane, BorderLayout.CENTER);
+        orderTablePanel = new Table(
+                columnNames,
+                data,
+                true,
+                Map.of(
+                        "Delete", (id, action) -> {
+                            orderManager.deleteOrder(Integer.parseInt(id));
+                        },
+                        "Edit", (id, action) -> {
+                            JOptionPane.showMessageDialog(this,
+                                    "Edit feature not implemented yet for Order ID: " + id,
+                                    "Edit Order",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                )
+        );
+
+        scrollPane = new JScrollPane(orderTablePanel);
+        scrollPane.setBounds(50, 130, 700, 400);
+        add(scrollPane);
+
         revalidate();
         repaint();
     }
 
-    private ArrayList<Object[]> convertOrdersToRows(ArrayList<Order> orders) {
-        ArrayList<Object[]> rows = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        for (Order order : orders) {
-            rows.add(new Object[]{
-                    order.getOrderID(),
-                    order.getCustomer().getName(),
-                    sdf.format(order.getCompletionDate()),
-                    order.getStatus()
-            });
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == newOrderButton) {
+            JOptionPane.showMessageDialog(this, "New Order dialog would open here.");
+            loadOrdersIntoTable();
+
+        } else if (e.getSource() == existingOrdersButton) {
+            toggleExistingOrdersView(true);
+            loadOrdersIntoTable();
         }
-        return rows;
     }
 }

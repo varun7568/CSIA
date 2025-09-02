@@ -47,26 +47,5 @@ public class Customer {
         return sb.toString();
     }
 
-    //add arrayList for order to store order history
-
-    /* customer search
-
-    public customerSearch(ArrayList<String> list, String target){
-        int start =0;
-        int end = list.size()-1;
-        while (start<= end){
-            int mid = (start + end)//2;
-            if(list[mid]==target){
-                return ;
-            } elif (list[mid] < target){
-                start = mid +1;
-            } else {
-                right = mid -1;
-            }
-        }
-
-    }*/
-
-
 }
 

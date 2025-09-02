@@ -1,73 +1,70 @@
-// Inside your Recipes class
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 public class Recipes {
-    private HashMap<String, Recipe> recipeBook;
-    private final String RECIPE_FILE = "recipes.txt";
+    private HashMap<String, ArrayList<Ingredient>> recipeBook;
+    private final String FILE_NAME = "recipes.txt";
 
     public Recipes() {
         recipeBook = new HashMap<>();
         loadRecipes();
     }
 
-    // New method to get a recipe by its name
-    public Recipe getRecipe(String name) {
-        return recipeBook.get(name);
+    // Add this method to expose the recipe book
+    public HashMap<String, ArrayList<Ingredient>> getRecipeBook() {
+        return recipeBook;
     }
 
-    // New method to handle file uploads
-    public boolean addRecipeFromFile(File file) {
-        try {
-            ArrayList<String> lines = FileHandler.loadFromFile(file.getAbsolutePath(), s -> s);
-            if (lines.isEmpty()) {
-                return false;
-            }
+    public ArrayList<Ingredient> getRecipe(String dishName) {
+        return recipeBook.getOrDefault(dishName, null);
+    }
 
-            // Assuming the first line is the dish name and the second is the price
-            String dishName = lines.get(0).trim();
-            double price = Double.parseDouble(lines.get(1).trim());
-
-            // The rest of the lines are ingredients
-            List<String> ingredientLines = lines.subList(2, lines.size());
-            Map<Ingredient, Integer> ingredients = new HashMap<>();
-
-            for (String line : ingredientLines) {
-                String[] parts = line.split(":");
-                if (parts.length == 2) {
-                    String name = parts[0].trim();
-                    int quantity = Integer.parseInt(parts[1].trim());
-                    ingredients.put(new Ingredient(name, quantity), quantity);
+    public void loadRecipes() {
+        ArrayList<String> lines = FileHandler.loadFromFile(FILE_NAME, line -> line);
+        for (String line : lines) {
+            String[] parts = line.split(";", 2);
+            if (parts.length == 2) {
+                String dish = parts[0].trim();
+                String[] ingStrs = parts[1].split(",");
+                ArrayList<Ingredient> ingredients = new ArrayList<>();
+                for (String ing : ingStrs) {
+                    String[] ingParts = ing.trim().split(":");
+                    if (ingParts.length == 2) {
+                        // Use double instead of int for quantity
+                        ingredients.add(new Ingredient(ingParts[0].trim(), Double.parseDouble(ingParts[1].trim())));
+                    }
                 }
+                recipeBook.put(dish, ingredients);
             }
-
-            Dish newDish = new Dish(dishName, price);
-            Recipe newRecipe = new Recipe(newDish, ingredients);
-
-            recipeBook.put(dishName, newRecipe);
-            saveRecipes();
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
         }
     }
 
-    // Existing load and save methods
-    private void loadRecipes() {
-        // ... (your existing load logic)
+    public void saveRecipes() {
+        ArrayList<String> lines = new ArrayList<>();
+        for (Map.Entry<String, ArrayList<Ingredient>> entry : recipeBook.entrySet()) {
+            StringBuilder sb = new StringBuilder(entry.getKey() + ";");
+            for (Ingredient ing : entry.getValue()) {
+                sb.append(ing.getName()).append(":").append(ing.getQuantity()).append(",");
+            }
+            lines.add(sb.substring(0, sb.length() - 1));
+        }
+        FileHandler.saveStringsToFile(FILE_NAME, lines);
     }
 
-    private void saveRecipes() {
-        // ... (your existing save logic)
-    }
-
-    public void addRecipe(Recipe recipe) {
-        recipeBook.put(recipe.getDish().getName(), recipe);
+    public void addRecipe(String dishName, ArrayList<Ingredient> ingredients) {
+        recipeBook.put(dishName, ingredients);
         saveRecipes();
+        System.out.println("Recipe for " + dishName + " added");
     }
 
-    public Set<String> getDishNames() {
-        return recipeBook.keySet();
+    public void displayAllRecipes() {
+        if (recipeBook.isEmpty()) {
+            System.out.println("No recipes found");
+        } else {
+            System.out.println("Available recipes:");
+            for (String dish : recipeBook.keySet()) {
+                System.out.println("- " + dish);
+            }
+        }
     }
 }

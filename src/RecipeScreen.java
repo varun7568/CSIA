@@ -1,58 +1,172 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
+import java.awt.event.*;
+import java.util.*;
 
 public class RecipeScreen extends JFrame implements ActionListener {
-    private JButton viewRecipesButton;
-    private JButton uploadRecipesButton;
     private Recipes recipes;
-    private Stock stock;
+    private JList<String> recipeList;
+    private DefaultListModel<String> listModel;
+    private JButton viewButton, addButton, deleteButton;
 
-    public RecipeScreen(Recipes recipes, Stock stock) {
-        this.recipes = recipes;
-        this.stock = stock;
+    public RecipeScreen() {
+        recipes = new Recipes();
 
-        setTitle("Recipes Screen");
-        setSize(800, 600);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new FlowLayout(FlowLayout.CENTER, 50, 50));
+        setTitle("Recipe Management");
+        setSize(600, 400);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-        viewRecipesButton = new JButton("View Recipes");
-        uploadRecipesButton = new JButton("Upload Recipes");
-
-        viewRecipesButton.setPreferredSize(new Dimension(250, 150));
-        uploadRecipesButton.setPreferredSize(new Dimension(250, 150));
-
-        viewRecipesButton.addActionListener(this);
-        uploadRecipesButton.addActionListener(this);
-
-        add(viewRecipesButton);
-        add(uploadRecipesButton);
+        setupUI();
+        loadRecipes();
 
         setVisible(true);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == viewRecipesButton) {
-            new ViewRecipesDialog(this, recipes, stock);
-        } else if (e.getSource() == uploadRecipesButton) {
-            uploadRecipeFromFile();
+    private void setupUI() {
+        // Recipe list
+        listModel = new DefaultListModel<>();
+        recipeList = new JList<>(listModel);
+        recipeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(recipeList);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+
+        viewButton = new JButton("View Recipe");
+        addButton = new JButton("Add Recipe");
+        deleteButton = new JButton("Delete Recipe");
+
+        viewButton.addActionListener(this);
+        addButton.addActionListener(this);
+        deleteButton.addActionListener(this);
+
+        buttonPanel.add(viewButton);
+        buttonPanel.add(addButton);
+        buttonPanel.add(deleteButton);
+
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private void loadRecipes() {
+        listModel.clear();
+        for (String recipeName : recipes.getRecipeBook().keySet()) {
+            listModel.addElement(recipeName);
         }
     }
 
-    private void uploadRecipeFromFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        int returnValue = fileChooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            if (recipes.addRecipeFromFile(selectedFile)) { // This is a new method we'll add
-                JOptionPane.showMessageDialog(this, "Recipe uploaded successfully!");
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to upload recipe. Please check the file format.", "Error", JOptionPane.ERROR_MESSAGE);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == viewButton) {
+            viewSelectedRecipe();
+        } else if (e.getSource() == addButton) {
+            addNewRecipe();
+        } else if (e.getSource() == deleteButton) {
+            deleteSelectedRecipe();
+        }
+    }
+
+    private void viewSelectedRecipe() {
+        String selected = recipeList.getSelectedValue();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Please select a recipe to view.");
+            return;
+        }
+
+        ArrayList<Ingredient> ingredients = recipes.getRecipe(selected);
+        StringBuilder sb = new StringBuilder("Recipe: " + selected + "\n\nIngredients:\n");
+
+        for (Ingredient ing : ingredients) {
+            sb.append("- ").append(ing.getName()).append(": ").append(ing.getQuantity()).append(" ").append(ing.getUnit()).append("\n");
+        }
+
+        JOptionPane.showMessageDialog(this, sb.toString(), "Recipe Details", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void addNewRecipe() {
+        JDialog dialog = new JDialog(this, "Add New Recipe", true);
+        dialog.setSize(400, 300);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+
+        JLabel nameLabel = new JLabel("Recipe Name:");
+        JTextField nameField = new JTextField();
+
+        JLabel ingLabel = new JLabel("Ingredients (name:quantity, name:quantity):");
+        JTextArea ingArea = new JTextArea();
+
+        formPanel.add(nameLabel);
+        formPanel.add(nameField);
+        formPanel.add(ingLabel);
+        formPanel.add(new JScrollPane(ingArea));
+
+        JButton saveButton = new JButton("Save");
+        JButton cancelButton = new JButton("Cancel");
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        saveButton.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            String ingredientsText = ingArea.getText().trim();
+
+            if (name.isEmpty() || ingredientsText.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Please fill in all fields.");
+                return;
             }
+
+            try {
+                ArrayList<Ingredient> ingredients = parseIngredients(ingredientsText);
+                recipes.addRecipe(name, ingredients);
+                loadRecipes();
+                dialog.dispose();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Error parsing ingredients: " + ex.getMessage());
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    private ArrayList<Ingredient> parseIngredients(String text) {
+        ArrayList<Ingredient> ingredients = new ArrayList<>();
+        String[] pairs = text.split(",");
+
+        for (String pair : pairs) {
+            String[] parts = pair.trim().split(":");
+            if (parts.length == 2) {
+                String name = parts[0].trim();
+                double quantity = Double.parseDouble(parts[1].trim());
+                ingredients.add(new Ingredient(name, quantity));
+            }
+        }
+        return ingredients;
+    }
+
+    private void deleteSelectedRecipe() {
+        String selected = recipeList.getSelectedValue();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Please select a recipe to delete.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Delete recipe '" + selected + "'?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            recipes.getRecipeBook().remove(selected);
+            recipes.saveRecipes();
+            loadRecipes();
         }
     }
 }

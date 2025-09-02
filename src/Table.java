@@ -1,92 +1,97 @@
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Vector;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class Table extends JPanel {
     private JTable table;
     private DefaultTableModel model;
 
-    public Table(String[] columnNames, ArrayList<Object[]> rowData, boolean includeDeleteColumn, ActionListener deleteListener) {
+    /**
+     * @param columnNames    Table column headers
+     * @param rowData        Table data
+     * @param includeActions Whether to add an "Actions" column
+     * @param actions        Map of button label -> callback (rowKey, actionLabel)
+     */
+    public Table(String[] columnNames, Object[][] rowData,
+                 boolean includeActions,
+                 Map<String, BiConsumer<String, String>> actions) {
+
         setLayout(new BorderLayout());
 
-        Vector<String> columnVector = new Vector<>();
-        for (String name : columnNames) {
-            columnVector.add(name);
-        }
+        if (includeActions && actions != null) {
+            // Add "Actions" column
+            String[] extendedColumns = Arrays.copyOf(columnNames, columnNames.length + 1);
+            extendedColumns[columnNames.length] = "Actions";
 
-        Vector<Vector<Object>> dataVector = new Vector<>();
-        for (Object[] row : rowData) {
-            Vector<Object> rowVector = new Vector<>();
-            for (Object item : row) {
-                rowVector.add(item);
+            Object[][] newRowData = new Object[rowData.length][extendedColumns.length];
+            for (int i = 0; i < rowData.length; i++) {
+                System.arraycopy(rowData[i], 0, newRowData[i], 0, rowData[i].length);
+                newRowData[i][extendedColumns.length - 1] = "Actions";
             }
-            dataVector.add(rowVector);
+
+            columnNames = extendedColumns;
+            rowData = newRowData;
         }
 
-        if (includeDeleteColumn) {
-            columnVector.add("Delete");
-            for (Vector<Object> row : dataVector) {
-                row.add("Delete"); // Placeholder value for the button
-            }
-        }
-
-        model = new DefaultTableModel(dataVector, columnVector) {
+        model = new DefaultTableModel(rowData, columnNames) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return includeDeleteColumn && column == getColumnCount() - 1;
+                return includeActions && column == getColumnCount() - 1;
             }
         };
 
         table = new JTable(model);
-        table.setFillsViewportHeight(true);
-        table.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
-        if (includeDeleteColumn) {
-            setupDeleteButton(deleteListener);
+        if (includeActions && actions != null) {
+            setupActionButtons(actions);
         }
     }
 
-    public JTable getTable() {
-        return table;
-    }
+    private void setupActionButtons(Map<String, BiConsumer<String, String>> actions) {
+        table.getColumn("Actions").setCellRenderer((tbl, value, isSelected, hasFocus, row, col) -> new JButton("Actions"));
 
-    private void setupDeleteButton(ActionListener deleteListener) {
-        table.getColumn("Delete").setCellRenderer((table, value, isSelected, hasFocus, row, column) -> new JButton("Delete"));
-
-        table.getColumn("Delete").setCellEditor(new DefaultCellEditor(new JCheckBox()) {
-            private final JButton deleteButton = new JButton("Delete");
-            private String nameToDelete;
-            private int rowToDelete;
+        table.getColumn("Actions").setCellEditor(new DefaultCellEditor(new JCheckBox()) {
+            private final JButton actionButton = new JButton("Actions");
 
             {
-                deleteButton.addActionListener(e -> {
-                    fireEditingStopped(); // Stop editing the cell
+                actionButton.addActionListener(e -> {
+                    int selectedRow = table.getSelectedRow();
+                    if (selectedRow != -1) {
+                        Object rowKeyObj = model.getValueAt(selectedRow, 0); // first col as identifier
+                        String rowKey = String.valueOf(rowKeyObj); // safe conversion
 
-                    rowToDelete = table.convertRowIndexToModel(table.getEditingRow());
-                    nameToDelete = (String) model.getValueAt(rowToDelete, 0);
+                        // Show action choices
+                        Object[] options = actions.keySet().toArray();
+                        String choice = (String) JOptionPane.showInputDialog(
+                                table,
+                                "Choose an action for " + rowKey,
+                                "Actions",
+                                JOptionPane.PLAIN_MESSAGE,
+                                null,
+                                options,
+                                options[0]
+                        );
 
-                    ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, nameToDelete);
-                    deleteListener.actionPerformed(event);
+                        if (choice != null && actions.containsKey(choice)) {
+                            actions.get(choice).accept(rowKey, choice);
+
+                            // If delete was chosen, remove row from UI
+                            if (choice.equalsIgnoreCase("Delete")) {
+                                model.removeRow(selectedRow);
+                            }
+                        }
+                    }
                 });
             }
 
             @Override
             public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-                return deleteButton;
+                return actionButton;
             }
         });
-    }
-
-    public void refreshData(ArrayList<Object[]> rowData) {
-        model.setRowCount(0);
-
-        for (Object[] row : rowData) {
-            model.addRow(row);
-        }
     }
 }

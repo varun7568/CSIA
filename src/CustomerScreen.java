@@ -2,16 +2,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class CustomerScreen extends JFrame implements ActionListener {
     private JLabel labelCustomer;
     private JButton newCustomersButton;
     private JButton existingCustomersButton;
-
     private JTextField textSearch;
     private JButton searchButton;
     private JButton showAllButton;
-
     private JScrollPane scrollPane;
     private CustomerManager customerManager;
     private Table customerTablePanel;
@@ -21,10 +20,14 @@ public class CustomerScreen extends JFrame implements ActionListener {
 
         setTitle("Customer Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setSize(800, 600);
         setLayout(null);
 
+        setupUI();
+        setVisible(true);
+    }
+
+    private void setupUI() {
         labelCustomer = new JLabel("Customer Screen");
         labelCustomer.setBounds(300, 20, 200, 30);
         labelCustomer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -50,25 +53,21 @@ public class CustomerScreen extends JFrame implements ActionListener {
         showAllButton.setBounds(420, 130, 100, 30);
         showAllButton.addActionListener(this);
 
-        scrollPane = new JScrollPane(); // placeholder until loaded
-
         add(labelCustomer);
         add(newCustomersButton);
         add(existingCustomersButton);
         add(textSearch);
         add(searchButton);
         add(showAllButton);
-        add(scrollPane);
 
         toggleExistingCustomersView(false);
-        setVisible(true);
     }
 
     private void toggleExistingCustomersView(boolean visible) {
         textSearch.setVisible(visible);
         searchButton.setVisible(visible);
         showAllButton.setVisible(visible);
-        scrollPane.setVisible(visible);
+        if (scrollPane != null) scrollPane.setVisible(visible);
         newCustomersButton.setVisible(!visible);
         existingCustomersButton.setVisible(!visible);
         labelCustomer.setText(visible ? "Customer Overview" : "Customer Screen");
@@ -80,45 +79,57 @@ public class CustomerScreen extends JFrame implements ActionListener {
         }
 
         String[] columnNames = {"Name", "Phone Number", "Address", "Orders"};
+        ArrayList<Customer> customers = customerManager.getAllCustomers();
 
-        ArrayList<Object[]> rowData = new ArrayList<>();
-        for (Customer c : customerManager.getAllCustomers()) {
-            rowData.add(new Object[]{
-                    c.getName(),
-                    c.getPhoneNum(),
-                    c.getAddress(),
-                    String.join(", ", c.getOrders())
-            });
+        Object[][] data = new Object[customers.size()][4];
+        for (int i = 0; i < customers.size(); i++) {
+            Customer c = customers.get(i);
+            data[i][0] = c.getName();
+            data[i][1] = c.getPhoneNum();
+            data[i][2] = c.getAddress();
+            data[i][3] = String.join(", ", c.getOrders());
         }
 
-        customerTablePanel = new Table(columnNames, rowData, true, e -> {
-            String nameToDelete = e.getActionCommand();
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Delete customer '" + nameToDelete + "'?", "Confirm", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                customerManager.deleteCustomer(nameToDelete);
-                loadCustomersIntoTable();
-            }
-        });
+        // ✅ unified table with Delete + Edit actions
+        customerTablePanel = new Table(
+                columnNames,
+                data,
+                true,
+                Map.of(
+                        "Delete", (name, action) -> {
+                            customerManager.deleteCustomer(name);
+                        },
+                        "Edit", (name, action) -> {
+                            Customer c = customerManager.getCustomerByName(name);
+                            if (c != null) {
+                                JOptionPane.showMessageDialog(this,
+                                        "Edit feature not implemented yet for:\n"
+                                                + "Name: " + c.getName() + "\n"
+                                                + "Phone: " + c.getPhoneNum() + "\n"
+                                                + "Address: " + c.getAddress(),
+                                        "Edit Customer",
+                                        JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        }
+                )
+        );
 
         scrollPane = new JScrollPane(customerTablePanel);
         scrollPane.setBounds(50, 180, 700, 350);
         add(scrollPane);
+
         revalidate();
         repaint();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("New Customers")) {
-            System.out.println("Opening new customers dialog");
+        if (e.getSource() == newCustomersButton) {
             CustomerInfo customerInfoDialog = new CustomerInfo(customerManager);
             customerInfoDialog.setVisible(true);
             loadCustomersIntoTable();
-            toggleExistingCustomersView(false);
 
-        } else if (e.getActionCommand().equals("Existing Customers")) {
-            System.out.println("Displaying existing customers");
+        } else if (e.getSource() == existingCustomersButton) {
             toggleExistingCustomersView(true);
             loadCustomersIntoTable();
             textSearch.setText("Enter Customer Name to Search");
@@ -130,10 +141,8 @@ public class CustomerScreen extends JFrame implements ActionListener {
                 return;
             }
 
-            int index = customerManager.binarySearchCustomer(searchTerm);
             Customer foundCustomer = customerManager.getCustomerByName(searchTerm);
-
-            if (index != -1 && foundCustomer != null) {
+            if (foundCustomer != null) {
                 JOptionPane.showMessageDialog(this,
                         "Customer Found:\nName: " + foundCustomer.getName() +
                                 "\nPhone: " + foundCustomer.getPhoneNum() +

@@ -90,7 +90,6 @@ public class CustomerScreen extends JFrame implements ActionListener {
             data[i][3] = String.join(", ", c.getOrders());
         }
 
-        // ✅ unified table with Delete + Edit actions
         customerTablePanel = new Table(
                 columnNames,
                 data,
@@ -98,17 +97,12 @@ public class CustomerScreen extends JFrame implements ActionListener {
                 Map.of(
                         "Delete", (name, action) -> {
                             customerManager.deleteCustomer(name);
+                            loadCustomersIntoTable();
                         },
                         "Edit", (name, action) -> {
                             Customer c = customerManager.getCustomerByName(name);
                             if (c != null) {
-                                JOptionPane.showMessageDialog(this,
-                                        "Edit feature not implemented yet for:\n"
-                                                + "Name: " + c.getName() + "\n"
-                                                + "Phone: " + c.getPhoneNum() + "\n"
-                                                + "Address: " + c.getAddress(),
-                                        "Edit Customer",
-                                        JOptionPane.INFORMATION_MESSAGE);
+                                showEditCustomerDialog(c);
                             }
                         }
                 )
@@ -120,6 +114,60 @@ public class CustomerScreen extends JFrame implements ActionListener {
 
         revalidate();
         repaint();
+    }
+
+    private void showEditCustomerDialog(Customer customer) {
+        JDialog dialog = new JDialog(this, "Edit Customer", true);
+        dialog.setSize(400, 350);
+        dialog.setLayout(new GridLayout(4, 2, 10, 10));
+
+        JLabel nameLabel = new JLabel("Name:");
+        JTextField nameField = new JTextField(customer.getName());
+
+        JLabel phoneLabel = new JLabel("Phone:");
+        JTextField phoneField = new JTextField(customer.getPhoneNum());
+
+        JLabel addressLabel = new JLabel("Address:");
+        JTextField addressField = new JTextField(customer.getAddress());
+
+        JButton saveButton = new JButton("Save");
+        JButton cancelButton = new JButton("Cancel");
+
+        dialog.add(nameLabel);
+        dialog.add(nameField);
+        dialog.add(phoneLabel);
+        dialog.add(phoneField);
+        dialog.add(addressLabel);
+        dialog.add(addressField);
+        dialog.add(saveButton);
+        dialog.add(cancelButton);
+
+        saveButton.addActionListener(e -> {
+            String newName = nameField.getText().trim();
+            String newPhone = phoneField.getText().trim();
+            String newAddress = addressField.getText().trim();
+
+            if (newName.isEmpty() || newPhone.isEmpty() || newAddress.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "All fields are required.");
+                return;
+            }
+
+            // Update customer details
+            customerManager.deleteCustomer(customer.getName());
+            Customer updatedCustomer = new Customer(newName, newPhone, newAddress);
+            for (String order : customer.getOrders()) {
+                updatedCustomer.addOrder(order);
+            }
+            customerManager.addCustomer(updatedCustomer);
+
+            JOptionPane.showMessageDialog(dialog, "Customer updated successfully!");
+            dialog.dispose();
+            loadCustomersIntoTable();
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     @Override

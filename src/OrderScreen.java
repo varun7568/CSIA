@@ -1,8 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 public class OrderScreen extends JFrame implements ActionListener {
     private JLabel labelOrders;
@@ -58,7 +57,7 @@ public class OrderScreen extends JFrame implements ActionListener {
         }
 
         String[] columnNames = {"Order ID", "Customer", "Date", "Status", "Dishes"};
-        ArrayList<Order> orders = orderManager.getOrdersByStatus("Upcoming"); // example
+        ArrayList<Order> orders = orderManager.getOrdersByStatus("Upcoming");
 
         Object[][] data = new Object[orders.size()][5];
         for (int i = 0; i < orders.size(); i++) {
@@ -77,12 +76,11 @@ public class OrderScreen extends JFrame implements ActionListener {
                 Map.of(
                         "Delete", (id, action) -> {
                             orderManager.deleteOrder(Integer.parseInt(id));
+                            loadOrdersIntoTable();
                         },
-                        "Edit", (id, action) -> {
-                            JOptionPane.showMessageDialog(this,
-                                    "Edit feature not implemented yet for Order ID: " + id,
-                                    "Edit Order",
-                                    JOptionPane.INFORMATION_MESSAGE);
+                        "Complete", (id, action) -> {
+                            orderManager.completeOrder(Integer.parseInt(id));
+                            loadOrdersIntoTable();
                         }
                 )
         );
@@ -98,9 +96,9 @@ public class OrderScreen extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == newOrderButton) {
-            JOptionPane.showMessageDialog(this, "New Order dialog would open here.");
+            NewOrderDialog dialog = new NewOrderDialog(this, new CustomerManager(), new Recipes(), orderManager);
+            dialog.setVisible(true);
             loadOrdersIntoTable();
-
         } else if (e.getSource() == existingOrdersButton) {
             toggleExistingOrdersView(true);
             loadOrdersIntoTable();

@@ -25,19 +25,9 @@ public class StockManager {
         for (Ingredient ingredient : stock.values()) {
             lines.add(ingredient.toString());
         }
-        FileHandler.saveStringsToFile(FILE_NAME, lines); // Use the new method
+        FileHandler.saveStringsToFile(FILE_NAME, lines);
     }
 
-    // Alternative: Use the generic method with identity function
-    public void saveStockAlternative() {
-        ArrayList<String> lines = new ArrayList<>();
-        for (Ingredient ingredient : stock.values()) {
-            lines.add(ingredient.toString());
-        }
-        FileHandler.saveToFile(FILE_NAME, lines, s -> s); // This should work now
-    }
-
-    // Rest of your StockManager methods...
     public void addIngredient(String name, double quantity, String unit) {
         if (stock.containsKey(name)) {
             stock.get(name).updateQuantity(quantity);
@@ -82,5 +72,15 @@ public class StockManager {
     public Map<String, Ingredient> getStock() {
         return stock;
     }
-    
+
+    public void deleteIngredient(String ingredientName) {
+        if (stock.containsKey(ingredientName)) {
+            stock.remove(ingredientName);
+            saveStock();
+        }
+    }
+
+    public Ingredient getIngredientByName(String name) {
+        return stock.get(name);
+    }
 }

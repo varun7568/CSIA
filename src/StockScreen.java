@@ -57,14 +57,15 @@ public class StockScreen extends JFrame implements ActionListener {
             remove(scrollPane);
         }
 
-        String[] columnNames = {"Ingredient", "Quantity"};
-        ArrayList<Ingredient> stock = stockManager.getAllIngredients();
+        String[] columnNames = {"Ingredient", "Quantity", "Unit"};
+        ArrayList<Ingredient> stock = new ArrayList<>(stockManager.getStock().values());
 
-        Object[][] data = new Object[stock.size()][2];
+        Object[][] data = new Object[stock.size()][3];
         for (int i = 0; i < stock.size(); i++) {
             Ingredient ing = stock.get(i);
             data[i][0] = ing.getName();
             data[i][1] = ing.getQuantity();
+            data[i][2] = ing.getUnit();
         }
 
         stockTablePanel = new Table(
@@ -76,13 +77,10 @@ public class StockScreen extends JFrame implements ActionListener {
                             stockManager.deleteIngredient(ingredient);
                         },
                         "Edit", (ingredient, action) -> {
-                            Ingredient ing = stockManager.getIngredientByName(ingredient);
-                            if (ing != null) {
-                                JOptionPane.showMessageDialog(this,
-                                        "Edit feature not implemented yet for Ingredient: " + ing.getName(),
-                                        "Edit Stock",
-                                        JOptionPane.INFORMATION_MESSAGE);
-                            }
+                            JOptionPane.showMessageDialog(this,
+                                    "Edit feature not implemented yet for Ingredient: " + ingredient,
+                                    "Edit Stock",
+                                    JOptionPane.INFORMATION_MESSAGE);
                         }
                 )
         );
@@ -98,12 +96,61 @@ public class StockScreen extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == addStockButton) {
-            JOptionPane.showMessageDialog(this, "Add Stock dialog would open here.");
-            loadStockIntoTable();
-
+            showAddStockDialog();
         } else if (e.getSource() == viewStockButton) {
             toggleStockView(true);
             loadStockIntoTable();
         }
+    }
+
+    private void showAddStockDialog() {
+        JDialog dialog = new JDialog(this, "Add Stock", true);
+        dialog.setSize(400, 300);
+        dialog.setLayout(new GridLayout(4, 2, 10, 10));
+
+        JLabel nameLabel = new JLabel("Ingredient Name:");
+        JTextField nameField = new JTextField();
+
+        JLabel quantityLabel = new JLabel("Quantity:");
+        JTextField quantityField = new JTextField();
+
+        JLabel unitLabel = new JLabel("Unit:");
+        JTextField unitField = new JTextField("units");
+
+        JButton addButton = new JButton("Add");
+        JButton cancelButton = new JButton("Cancel");
+
+        dialog.add(nameLabel);
+        dialog.add(nameField);
+        dialog.add(quantityLabel);
+        dialog.add(quantityField);
+        dialog.add(unitLabel);
+        dialog.add(unitField);
+        dialog.add(addButton);
+        dialog.add(cancelButton);
+
+        addButton.addActionListener(e -> {
+            try {
+                String name = nameField.getText().trim();
+                double quantity = Double.parseDouble(quantityField.getText().trim());
+                String unit = unitField.getText().trim();
+
+                if (name.isEmpty() || unit.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Please fill in all fields.");
+                    return;
+                }
+
+                stockManager.addIngredient(name, quantity, unit);
+                JOptionPane.showMessageDialog(dialog, "Stock added successfully!");
+                dialog.dispose();
+                loadStockIntoTable();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Please enter a valid number for quantity.");
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 }

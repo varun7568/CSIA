@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 
 public class Order {
     static int idCounter = 1;
@@ -17,23 +16,10 @@ public class Order {
         this.completionDate = completionDate;
     }
 
-    public void markCompleted(Stock stock, Recipes recipes) {
-        for (Dish dish : dishes) {
-            ArrayList<Ingredient> ingredients = recipes.getRecipe(dish.getName());
-            if (ingredients != null) {
-                for (Ingredient ingredient : ingredients) {
-                    // Cast double to int if needed, or keep as double
-                    stock.deductIngredient(ingredient.getName(), (int) ingredient.getQuantity());
-                }
-            }
-        }
-        this.status = "Completed";
-        System.out.println("Order " + orderID + " is complete");
-    }
-
     public void setCompletionDate(Date completionDate) {
         this.completionDate = completionDate;
     }
+
     public int getOrderID() {
         return orderID;
     }
@@ -57,6 +43,4 @@ public class Order {
     public Date getCompletionDate(){
         return completionDate;
     }
-    //link orderID to customer
-    //track timestamps for reports
 }

@@ -4,19 +4,19 @@ public class Main {
     public static void main(String[] args) {
         // Initialize managers
         CustomerManager customerManager = new CustomerManager();
-        Recipes recipes = new Recipes();
+        DishManager dishManager = new DishManager();
         StockManager stockManager = new StockManager();
-        OrderManager orderManager = new OrderManager(stockManager, recipes);
+        OrderManager orderManager = new OrderManager(stockManager, dishManager, new Recipes());
 
         // Load data
-        customerManager.loadCustomers(); // Add this method to CustomerManager
-        recipes.loadRecipes();
+        customerManager.loadCustomers();
+        dishManager.loadDishes();
         stockManager.loadStock();
         orderManager.loadOrders();
 
         // Start UI
         SwingUtilities.invokeLater(() -> {
-            new HomeScreen(customerManager, recipes, stockManager, orderManager);
+            new HomeScreen(customerManager, dishManager, stockManager, orderManager);
         });
     }
 }

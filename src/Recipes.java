@@ -1,5 +1,5 @@
-import java.io.*;
 import java.util.*;
+import java.io.*;
 
 public class Recipes {
     private HashMap<String, ArrayList<Ingredient>> recipeBook;
@@ -10,13 +10,12 @@ public class Recipes {
         loadRecipes();
     }
 
-    // Add this method to expose the recipe book
     public HashMap<String, ArrayList<Ingredient>> getRecipeBook() {
         return recipeBook;
     }
 
     public ArrayList<Ingredient> getRecipe(String dishName) {
-        return recipeBook.getOrDefault(dishName, null);
+        return recipeBook.getOrDefault(dishName, new ArrayList<>());
     }
 
     public void loadRecipes() {
@@ -29,9 +28,9 @@ public class Recipes {
                 ArrayList<Ingredient> ingredients = new ArrayList<>();
                 for (String ing : ingStrs) {
                     String[] ingParts = ing.trim().split(":");
-                    if (ingParts.length == 2) {
-                        // Use double instead of int for quantity
-                        ingredients.add(new Ingredient(ingParts[0].trim(), Double.parseDouble(ingParts[1].trim())));
+                    if (ingParts.length == 3) {
+                        ingredients.add(new Ingredient(ingParts[0].trim(),
+                                Double.parseDouble(ingParts[1].trim()), ingParts[2].trim()));
                     }
                 }
                 recipeBook.put(dish, ingredients);
@@ -44,9 +43,14 @@ public class Recipes {
         for (Map.Entry<String, ArrayList<Ingredient>> entry : recipeBook.entrySet()) {
             StringBuilder sb = new StringBuilder(entry.getKey() + ";");
             for (Ingredient ing : entry.getValue()) {
-                sb.append(ing.getName()).append(":").append(ing.getQuantity()).append(",");
+                sb.append(ing.getName()).append(":")
+                        .append(ing.getQuantity()).append(":")
+                        .append(ing.getUnit()).append(",");
             }
-            lines.add(sb.substring(0, sb.length() - 1));
+            if (!entry.getValue().isEmpty()) {
+                sb.setLength(sb.length() - 1);
+            }
+            lines.add(sb.toString());
         }
         FileHandler.saveStringsToFile(FILE_NAME, lines);
     }

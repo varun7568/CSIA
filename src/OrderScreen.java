@@ -1,7 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class OrderScreen extends JFrame implements ActionListener {
     private JLabel labelOrders;
@@ -10,9 +12,12 @@ public class OrderScreen extends JFrame implements ActionListener {
     private JScrollPane scrollPane;
     private OrderManager orderManager;
     private Table orderTablePanel;
+    private boolean ordersViewVisible = false;
+    private DishManager dishManager;
 
-    public OrderScreen(OrderManager orderManager) {
+    public OrderScreen(OrderManager orderManager, DishManager dishManager) {
         this.orderManager = orderManager;
+        this.dishManager = dishManager;
 
         setTitle("Order Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -45,7 +50,10 @@ public class OrderScreen extends JFrame implements ActionListener {
     }
 
     private void toggleExistingOrdersView(boolean visible) {
-        if (scrollPane != null) scrollPane.setVisible(visible);
+        ordersViewVisible = visible;
+        if (scrollPane != null) {
+            scrollPane.setVisible(visible);
+        }
         newOrderButton.setVisible(!visible);
         existingOrdersButton.setVisible(!visible);
         labelOrders.setText(visible ? "Order Overview" : "Order Screen");
@@ -57,16 +65,16 @@ public class OrderScreen extends JFrame implements ActionListener {
         }
 
         String[] columnNames = {"Order ID", "Customer", "Date", "Status", "Dishes"};
-        ArrayList<Order> orders = orderManager.getOrdersByStatus("Upcoming");
+        ArrayList<Order> orders = orderManager.getAllOrders(); // This should work now
 
         Object[][] data = new Object[orders.size()][5];
         for (int i = 0; i < orders.size(); i++) {
             Order o = orders.get(i);
             data[i][0] = o.getOrderID();
             data[i][1] = o.getCustomer().getName();
-            data[i][2] = o.getCompletionDate() != null ? o.getCompletionDate().toString() : "N/A";
+            data[i][2] = o.getCompletionDate() != null ? new SimpleDateFormat("dd/MM/yyyy").format(o.getCompletionDate()) : "N/A";
             data[i][3] = o.getStatus();
-            data[i][4] = o.getDishes().toString();
+            data[i][4] = getDishNames(o.getDishes());
         }
 
         orderTablePanel = new Table(
@@ -87,18 +95,26 @@ public class OrderScreen extends JFrame implements ActionListener {
 
         scrollPane = new JScrollPane(orderTablePanel);
         scrollPane.setBounds(50, 130, 700, 400);
+        scrollPane.setVisible(ordersViewVisible);
         add(scrollPane);
 
         revalidate();
         repaint();
     }
 
+    private String getDishNames(ArrayList<Dish> dishes) {
+        StringBuilder sb = new StringBuilder();
+        for (Dish dish : dishes) {
+            sb.append(dish.getName()).append(", ");
+        }
+        return sb.length() > 0 ? sb.substring(0, sb.length() - 2) : "";
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == newOrderButton) {
-            NewOrderDialog dialog = new NewOrderDialog(this, new CustomerManager(), new Recipes(), orderManager);
+            NewOrderDialog dialog = new NewOrderDialog(this, new CustomerManager(), dishManager, orderManager);
             dialog.setVisible(true);
-            loadOrdersIntoTable();
         } else if (e.getSource() == existingOrdersButton) {
             toggleExistingOrdersView(true);
             loadOrdersIntoTable();

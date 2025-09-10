@@ -8,12 +8,13 @@ public class RecipeScreen extends JFrame implements ActionListener {
     private JList<String> recipeList;
     private DefaultListModel<String> listModel;
     private JButton viewButton, addButton, deleteButton;
+    private JTextArea recipeDetailsArea;
 
     public RecipeScreen() {
         recipes = new Recipes();
 
         setTitle("Recipe Management");
-        setSize(600, 400);
+        setSize(800, 500);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -24,17 +25,24 @@ public class RecipeScreen extends JFrame implements ActionListener {
     }
 
     private void setupUI() {
-        // Recipe list
+        // Left panel for recipe list
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension(200, 400));
+
         listModel = new DefaultListModel<>();
         recipeList = new JList<>(listModel);
         recipeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        recipeList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                viewSelectedRecipe();
+            }
+        });
 
-        JScrollPane scrollPane = new JScrollPane(recipeList);
-        add(scrollPane, BorderLayout.CENTER);
+        JScrollPane listScroll = new JScrollPane(recipeList);
+        leftPanel.add(listScroll, BorderLayout.CENTER);
 
-        // Buttons panel
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-
+        // Button panel
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 5));
         viewButton = new JButton("View Recipe");
         addButton = new JButton("Add Recipe");
         deleteButton = new JButton("Delete Recipe");
@@ -47,7 +55,24 @@ public class RecipeScreen extends JFrame implements ActionListener {
         buttonPanel.add(addButton);
         buttonPanel.add(deleteButton);
 
-        add(buttonPanel, BorderLayout.SOUTH);
+        leftPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Right panel for recipe details
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBorder(BorderFactory.createTitledBorder("Recipe Details"));
+
+        recipeDetailsArea = new JTextArea();
+        recipeDetailsArea.setEditable(false);
+        recipeDetailsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane detailsScroll = new JScrollPane(recipeDetailsArea);
+
+        rightPanel.add(detailsScroll, BorderLayout.CENTER);
+
+        // Split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+        splitPane.setDividerLocation(250);
+
+        add(splitPane, BorderLayout.CENTER);
     }
 
     private void loadRecipes() {
@@ -71,23 +96,29 @@ public class RecipeScreen extends JFrame implements ActionListener {
     private void viewSelectedRecipe() {
         String selected = recipeList.getSelectedValue();
         if (selected == null) {
-            JOptionPane.showMessageDialog(this, "Please select a recipe to view.");
+            recipeDetailsArea.setText("Please select a recipe to view.");
             return;
         }
 
         ArrayList<Ingredient> ingredients = recipes.getRecipe(selected);
-        StringBuilder sb = new StringBuilder("Recipe: " + selected + "\n\nIngredients:\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Recipe: ").append(selected).append("\n\n");
+        sb.append("Ingredients:\n");
+        sb.append("----------------------------------------\n");
+        sb.append(String.format("%-20s %-10s %-10s\n", "Name", "Quantity", "Unit"));
+        sb.append("----------------------------------------\n");
 
         for (Ingredient ing : ingredients) {
-            sb.append("- ").append(ing.getName()).append(": ").append(ing.getQuantity()).append(" ").append(ing.getUnit()).append("\n");
+            sb.append(String.format("%-20s %-10.2f %-10s\n",
+                    ing.getName(), ing.getQuantity(), ing.getUnit()));
         }
 
-        JOptionPane.showMessageDialog(this, sb.toString(), "Recipe Details", JOptionPane.INFORMATION_MESSAGE);
+        recipeDetailsArea.setText(sb.toString());
     }
 
     private void addNewRecipe() {
         JDialog dialog = new JDialog(this, "Add New Recipe", true);
-        dialog.setSize(400, 300);
+        dialog.setSize(500, 400);
         dialog.setLayout(new BorderLayout());
 
         JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
@@ -95,8 +126,9 @@ public class RecipeScreen extends JFrame implements ActionListener {
         JLabel nameLabel = new JLabel("Recipe Name:");
         JTextField nameField = new JTextField();
 
-        JLabel ingLabel = new JLabel("Ingredients (name:quantity, name:quantity):");
+        JLabel ingLabel = new JLabel("Ingredients (name:quantity:unit, name:quantity:unit):");
         JTextArea ingArea = new JTextArea();
+        ingArea.setRows(5);
 
         formPanel.add(nameLabel);
         formPanel.add(nameField);
@@ -144,10 +176,11 @@ public class RecipeScreen extends JFrame implements ActionListener {
 
         for (String pair : pairs) {
             String[] parts = pair.trim().split(":");
-            if (parts.length == 2) {
+            if (parts.length == 3) {
                 String name = parts[0].trim();
                 double quantity = Double.parseDouble(parts[1].trim());
-                ingredients.add(new Ingredient(name, quantity));
+                String unit = parts[2].trim();
+                ingredients.add(new Ingredient(name, quantity, unit));
             }
         }
         return ingredients;
@@ -167,6 +200,7 @@ public class RecipeScreen extends JFrame implements ActionListener {
             recipes.getRecipeBook().remove(selected);
             recipes.saveRecipes();
             loadRecipes();
+            recipeDetailsArea.setText("");
         }
     }
 }

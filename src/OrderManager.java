@@ -1,18 +1,24 @@
-import java.util.*;
-import java.text.*;
-import java.time.LocalDate;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class OrderManager {
     private ArrayList<Order> orders;
     private StockManager stockManager;
+    private DishManager dishManager;
     private Recipes recipes;
     private static final String FILE_NAME = "orders.txt";
 
-    public OrderManager(StockManager stockManager, Recipes recipes) {
+    public OrderManager(StockManager stockManager, DishManager dishManager, Recipes recipes) {
         this.orders = new ArrayList<>();
         this.stockManager = stockManager;
+        this.dishManager = dishManager;
         this.recipes = recipes;
         loadOrders();
+    }
+
+    public ArrayList<Order> getAllOrders() {
+        return new ArrayList<>(orders);
     }
 
     public void addOrder(Order order) {
@@ -29,6 +35,7 @@ public class OrderManager {
         for (Order order : orders) {
             if (order.getOrderID() == orderId && "Upcoming".equals(order.getStatus())) {
                 for (Dish dish : order.getDishes()) {
+                    // Use recipes to deduct ingredients
                     stockManager.deductIngredientsForDish(dish.getName(), recipes);
                 }
                 order.setStatus("Completed");
@@ -87,12 +94,14 @@ public class OrderManager {
                     String status = parts[3];
                     String[] dishNames = parts[4].split("\\|");
 
-                    // Create customer (simplified - in real app, use CustomerManager)
                     Customer customer = new Customer(customerName, "0000000000", "Unknown");
 
                     ArrayList<Dish> dishes = new ArrayList<>();
                     for (String dishName : dishNames) {
-                        dishes.add(new Dish(dishName, 0)); // Price not stored in order file
+                        Dish dish = dishManager.getDishByName(dishName);
+                        if (dish != null) {
+                            dishes.add(dish);
+                        }
                     }
 
                     Order order = new Order(customer, dishes, date);

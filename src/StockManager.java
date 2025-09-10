@@ -1,5 +1,4 @@
 import java.util.*;
-import java.time.LocalDate;
 
 public class StockManager {
     private Map<String, Ingredient> stock;
@@ -39,7 +38,9 @@ public class StockManager {
 
     public boolean deductIngredientsForDish(String dishName, Recipes recipes) {
         ArrayList<Ingredient> required = recipes.getRecipe(dishName);
-        if (required == null) return false;
+        if (required == null || required.isEmpty()) {
+            return false;
+        }
 
         // Check availability first
         for (Ingredient requiredIng : required) {

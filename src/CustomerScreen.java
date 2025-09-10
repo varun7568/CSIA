@@ -14,6 +14,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
     private JScrollPane scrollPane;
     private CustomerManager customerManager;
     private Table customerTablePanel;
+    private boolean customersViewVisible = false;
 
     public CustomerScreen() {
         customerManager = new CustomerManager();
@@ -43,6 +44,21 @@ public class CustomerScreen extends JFrame implements ActionListener {
 
         textSearch = new JTextField("Enter Customer Name to Search");
         textSearch.setBounds(50, 130, 250, 30);
+        textSearch.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (textSearch.getText().equals("Enter Customer Name to Search")) {
+                    textSearch.setText("");
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (textSearch.getText().isEmpty()) {
+                    textSearch.setText("Enter Customer Name to Search");
+                }
+            }
+        });
         textSearch.addActionListener(this);
 
         searchButton = new JButton("Search");
@@ -64,6 +80,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
     }
 
     private void toggleExistingCustomersView(boolean visible) {
+        customersViewVisible = visible;
         textSearch.setVisible(visible);
         searchButton.setVisible(visible);
         showAllButton.setVisible(visible);
@@ -110,6 +127,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
 
         scrollPane = new JScrollPane(customerTablePanel);
         scrollPane.setBounds(50, 180, 700, 350);
+        scrollPane.setVisible(customersViewVisible);
         add(scrollPane);
 
         revalidate();
@@ -152,6 +170,14 @@ public class CustomerScreen extends JFrame implements ActionListener {
                 return;
             }
 
+            // Check if any changes were made
+            if (newName.equals(customer.getName()) &&
+                    newPhone.equals(customer.getPhoneNum()) &&
+                    newAddress.equals(customer.getAddress())) {
+                JOptionPane.showMessageDialog(dialog, "No changes were made.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
             // Update customer details
             customerManager.deleteCustomer(customer.getName());
             Customer updatedCustomer = new Customer(newName, newPhone, newAddress);
@@ -160,7 +186,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
             }
             customerManager.addCustomer(updatedCustomer);
 
-            JOptionPane.showMessageDialog(dialog, "Customer updated successfully!");
+            JOptionPane.showMessageDialog(dialog, "Customer updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             dialog.dispose();
             loadCustomersIntoTable();
         });
@@ -175,7 +201,7 @@ public class CustomerScreen extends JFrame implements ActionListener {
         if (e.getSource() == newCustomersButton) {
             CustomerInfo customerInfoDialog = new CustomerInfo(customerManager);
             customerInfoDialog.setVisible(true);
-            loadCustomersIntoTable();
+            // Don't automatically show customers table after dialog closes
 
         } else if (e.getSource() == existingCustomersButton) {
             toggleExistingCustomersView(true);

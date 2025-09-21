@@ -1,0 +1,8 @@
+chicken:9.0:kg
+potatoes:10.0:kg
+curry_powder:1.9:kg
+soy_sauce:1.0:liters
+beef:5.0:kg
+carrots:7.0:kg
+rice:14.5:kg
+vegetables:8.0:kg

@@ -29,8 +29,11 @@ public class Recipes {
                 for (String ing : ingStrs) {
                     String[] ingParts = ing.trim().split(":");
                     if (ingParts.length == 3) {
-                        ingredients.add(new Ingredient(ingParts[0].trim(),
-                                Double.parseDouble(ingParts[1].trim()), ingParts[2].trim()));
+                        ingredients.add(new Ingredient(
+                                ingParts[0].trim(),
+                                Double.parseDouble(ingParts[1].trim()),
+                                ingParts[2].trim()
+                        ));
                     }
                 }
                 recipeBook.put(dish, ingredients);
@@ -70,5 +73,19 @@ public class Recipes {
                 System.out.println("- " + dish);
             }
         }
+    }
+
+    // NEW: Check if we have enough stock for a dish
+    public boolean canMakeDish(String dishName, StockManager stockManager) {
+        ArrayList<Ingredient> required = getRecipe(dishName);
+        if (required == null || required.isEmpty()) return false;
+
+        for (Ingredient ing : required) {
+            Ingredient stockIng = stockManager.getIngredientByName(ing.getName());
+            if (stockIng == null || stockIng.getQuantity() < ing.getQuantity()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

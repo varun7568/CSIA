@@ -1,0 +1,5 @@
+Biryani;chicken:2.0:kg,rice:1.0:kg,salt:0.5:tsp
+Pasta;Pasta:100.0:g,Onions:2.0:whole,Tomato:1.0:unit
+Chicken Curry;chicken:1:kg,rice:0.5:kg,curry_powder:0.1:kg
+Vegetable Stir Fry;vegetables:0.8:kg,rice:0.4:kg,soy_sauce:0.05:liters
+Beef Stew;beef:1.2:kg,potatoes:0.6:kg,carrots:0.3:kg

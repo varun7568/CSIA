@@ -36,28 +36,17 @@ public class StockManager {
         saveStock();
     }
 
-    public boolean deductIngredientsForDish(String dishName, Recipes recipes) {
-        ArrayList<Ingredient> required = recipes.getRecipe(dishName);
-        if (required == null || required.isEmpty()) {
-            return false;
-        }
-
-        // Check availability first
-        for (Ingredient requiredIng : required) {
-            Ingredient stockIng = stock.get(requiredIng.getName());
-            if (stockIng == null || stockIng.getQuantity() < requiredIng.getQuantity()) {
-                return false;
+    // NEW: Proper ingredient deduction method
+    public boolean deductIngredient(String name, double quantity) {
+        if (stock.containsKey(name)) {
+            Ingredient ingredient = stock.get(name);
+            if (ingredient.getQuantity() >= quantity) {
+                ingredient.updateQuantity(-quantity);
+                saveStock();
+                return true;
             }
         }
-
-        // Then deduct
-        for (Ingredient requiredIng : required) {
-            Ingredient stockIng = stock.get(requiredIng.getName());
-            stockIng.updateQuantity(-requiredIng.getQuantity());
-        }
-
-        saveStock();
-        return true;
+        return false;
     }
 
     public List<Ingredient> getLowStockItems(double threshold) {
@@ -83,5 +72,16 @@ public class StockManager {
 
     public Ingredient getIngredientByName(String name) {
         return stock.get(name);
+    }
+
+    // NEW: Check stock levels for all ingredients in a recipe
+    public boolean checkStockForRecipe(ArrayList<Ingredient> ingredients) {
+        for (Ingredient required : ingredients) {
+            Ingredient stockIng = getIngredientByName(required.getName());
+            if (stockIng == null || stockIng.getQuantity() < required.getQuantity()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -14,12 +14,14 @@ public class OrderScreen extends JFrame implements ActionListener {
     private Table orderTablePanel;
     private boolean ordersViewVisible = false;
     private DishManager dishManager;
+    private JButton backButton;
 
     public OrderScreen(OrderManager orderManager, DishManager dishManager) {
         this.orderManager = orderManager;
         this.dishManager = dishManager;
 
         setTitle("Order Screen");
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(800, 600);
         setLayout(null);
@@ -45,6 +47,11 @@ public class OrderScreen extends JFrame implements ActionListener {
         add(labelOrders);
         add(newOrderButton);
         add(existingOrdersButton);
+
+        backButton = new JButton("Back to Home");
+        backButton.setBounds(600, 80, 150, 30);
+        backButton.addActionListener(this);
+        add(backButton);
 
         toggleExistingOrdersView(false);
     }
@@ -118,6 +125,9 @@ public class OrderScreen extends JFrame implements ActionListener {
         } else if (e.getSource() == existingOrdersButton) {
             toggleExistingOrdersView(true);
             loadOrdersIntoTable();
+        }
+        if (e.getSource() == backButton) {
+            this.dispose();
         }
     }
 }

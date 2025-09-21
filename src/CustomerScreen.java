@@ -15,10 +15,11 @@ public class CustomerScreen extends JFrame implements ActionListener {
     private CustomerManager customerManager;
     private Table customerTablePanel;
     private boolean customersViewVisible = false;
+    private JButton backButton;
 
     public CustomerScreen() {
         customerManager = new CustomerManager();
-
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setTitle("Customer Screen");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(800, 600);
@@ -75,6 +76,11 @@ public class CustomerScreen extends JFrame implements ActionListener {
         add(textSearch);
         add(searchButton);
         add(showAllButton);
+
+        backButton = new JButton("Back to Home");
+        backButton.setBounds(600, 80, 150, 30);
+        backButton.addActionListener(this);
+        add(backButton);
 
         toggleExistingCustomersView(false);
     }
@@ -230,6 +236,9 @@ public class CustomerScreen extends JFrame implements ActionListener {
         } else if (e.getSource() == showAllButton) {
             textSearch.setText("Enter Customer Name to Search");
             loadCustomersIntoTable();
+        }
+        if (e.getSource() == backButton) {
+            this.dispose();
         }
     }
 }

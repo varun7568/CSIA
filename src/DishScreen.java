@@ -18,6 +18,7 @@ public class DishScreen extends JFrame implements ActionListener {
 
         setTitle("Dish Management & Analytics");
         setSize(1000, 700);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 

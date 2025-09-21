@@ -12,11 +12,13 @@ public class StockScreen extends JFrame implements ActionListener {
     private StockManager stockManager;
     private Table stockTablePanel;
     private boolean stockViewVisible = false;
+    private JButton backButton;
 
     public StockScreen(StockManager stockManager) {
         this.stockManager = stockManager;
 
         setTitle("Stock Screen");
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(800, 600);
         setLayout(null);
@@ -42,6 +44,11 @@ public class StockScreen extends JFrame implements ActionListener {
         add(labelStock);
         add(addStockButton);
         add(viewStockButton);
+
+        backButton = new JButton("Back to Home");
+        backButton.setBounds(600, 80, 150, 30);
+        backButton.addActionListener(this);
+        add(backButton);
 
         toggleStockView(false);
     }
@@ -213,6 +220,9 @@ public class StockScreen extends JFrame implements ActionListener {
         } else if (e.getSource() == viewStockButton) {
             toggleStockView(true);
             loadStockIntoTable();
+        }
+        if (e.getSource() == backButton) {
+            this.dispose();
         }
     }
 }

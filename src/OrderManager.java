@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,13 +35,33 @@ public class OrderManager {
     public void completeOrder(int orderId) {
         for (Order order : orders) {
             if (order.getOrderID() == orderId && "Upcoming".equals(order.getStatus())) {
+                // Check if we can make all dishes first
                 for (Dish dish : order.getDishes()) {
-                    // Use recipes to deduct ingredients
-                    stockManager.deductIngredientsForDish(dish.getName(), recipes);
+                    if (!recipes.canMakeDish(dish.getName(), stockManager)) {
+                        JOptionPane.showMessageDialog(null,
+                                "Cannot complete order: Not enough stock for " + dish.getName(),
+                                "Stock Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                 }
+
+                // If we have enough stock, deduct ingredients
+                for (Dish dish : order.getDishes()) {
+                    ArrayList<Ingredient> required = recipes.getRecipe(dish.getName());
+                    if (required != null) {
+                        for (Ingredient ing : required) {
+                            stockManager.deductIngredient(ing.getName(), ing.getQuantity());
+                        }
+                    }
+                }
+
                 order.setStatus("Completed");
                 order.setCompletionDate(new Date());
                 saveOrders();
+
+                JOptionPane.showMessageDialog(null,
+                        "Order #" + orderId + " completed successfully!\nStock has been updated.",
+                        "Order Completed", JOptionPane.INFORMATION_MESSAGE);
                 break;
             }
         }

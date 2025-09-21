@@ -9,6 +9,7 @@ public class RecipeScreen extends JFrame implements ActionListener {
     private DefaultListModel<String> listModel;
     private JButton viewButton, addButton, deleteButton;
     private JTextArea recipeDetailsArea;
+    private JButton backButton;
 
     public RecipeScreen() {
         recipes = new Recipes();
@@ -72,6 +73,11 @@ public class RecipeScreen extends JFrame implements ActionListener {
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         splitPane.setDividerLocation(250);
 
+        backButton = new JButton("Back to Home");
+        backButton.setBounds(600, 80, 150, 30);
+        backButton.addActionListener(this);
+        add(backButton);
+
         add(splitPane, BorderLayout.CENTER);
     }
 
@@ -91,6 +97,9 @@ public class RecipeScreen extends JFrame implements ActionListener {
         } else if (e.getSource() == deleteButton) {
             deleteSelectedRecipe();
         }
+        if (e.getSource() == backButton) {
+            this.dispose();
+        }
     }
 
     private void viewSelectedRecipe() {
@@ -99,6 +108,7 @@ public class RecipeScreen extends JFrame implements ActionListener {
             recipeDetailsArea.setText("Please select a recipe to view.");
             return;
         }
+
 
         ArrayList<Ingredient> ingredients = recipes.getRecipe(selected);
         StringBuilder sb = new StringBuilder();
